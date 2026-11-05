@@ -26,7 +26,6 @@ export function ActionForm({
 }) {
   const [state, formAction] = useActionState(action, {});
   useEffect(() => {
-    window.dispatchEvent(new Event("pp:flash"));
     if (state.ok) onSuccess?.(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

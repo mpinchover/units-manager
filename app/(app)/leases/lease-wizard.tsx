@@ -5,8 +5,9 @@ import { useMemo, useState, useTransition } from "react";
 import { Combobox, type Option } from "@/components/combobox";
 import { ActionForm, Field, Input, SubmitButton } from "@/components/form";
 import { Icon } from "@/components/icons";
-import { createTenantInline } from "../tenants/actions";
-import { generateLease, previewLease, type Block, type LeasePayload, type Vehicle } from "./actions";
+import { useApp } from "@/components/app-provider";
+import { useMutations } from "@/components/use-mutations";
+import type { Block, LeasePayload, Vehicle } from "@/lib/data-source";
 
 export type UnitOption = Option & { buildingId: string; address: string; unitNumber: string; buildingUnitCount: number };
 export type ExtraField = { key: string; label: string };
@@ -60,14 +61,6 @@ function cents(v: string): number | null {
 
 const fmtAmount = (c: number) => (c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function triggerDownload(url: string) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
 
 /** The filled-in lease as a document, with substituted values highlighted. */
 function LeasePreview({ blocks, labels }: { blocks: Block[]; labels: Record<string, string> }) {
@@ -125,7 +118,9 @@ export function LeaseWizard({
   const [message, setMessage] = useState<string | null>(null);
   const [blocks, setBlocks] = useState<Block[] | null>(null);
   const [leaseId, setLeaseId] = useState(initialLeaseId);
-  const [saved, setSaved] = useState<{ leaseId: string; version: number; downloadUrl: string } | null>(null);
+  const [saved, setSaved] = useState<{ leaseId: string; version: number } | null>(null);
+  const { ds, refresh, check } = useApp();
+  const { createTenantInline } = useMutations();
   const [addingTenant, setAddingTenant] = useState(false);
   const [pending, start] = useTransition();
   const unitLocked = !!initialLeaseId; // an existing lease keeps its unit
@@ -214,8 +209,8 @@ export function LeaseWizard({
     return rest;
   };
 
-  function handleFailure(res: { message: string; errors?: Record<string, string> }) {
-    setMessage(res.message);
+  function handleFailure(res: { error: string; errors?: Record<string, string>; status?: number }) {
+    setMessage(res.errors && res.status === 400 ? "Please fix the highlighted fields." : res.error);
     if (res.errors && Object.keys(res.errors).length) {
       setErrors(res.errors);
       setStep(Math.min(...Object.keys(res.errors).map(stepFor)));
@@ -225,9 +220,9 @@ export function LeaseWizard({
   function showPreview() {
     setMessage(null);
     start(async () => {
-      const res = await previewLease(payload(), leaseId);
+      const res = check(await ds.previewLease(payload(), leaseId));
       if (!res.ok) return handleFailure(res);
-      setBlocks(res.blocks);
+      setBlocks(res.data.blocks);
       setStep(4);
       window.scrollTo({ top: 0 });
     });
@@ -248,14 +243,18 @@ export function LeaseWizard({
   }
 
   function download() {
-    if (saved) return triggerDownload(saved.downloadUrl);
     setMessage(null);
     start(async () => {
-      const res = await generateLease(payload(), leaseId);
+      if (saved) {
+        await ds.downloadPdf(saved.leaseId, saved.version);
+        return;
+      }
+      const res = check(await ds.saveLease(payload(), leaseId));
       if (!res.ok) return handleFailure(res);
-      setSaved(res);
-      setLeaseId(res.leaseId); // later edits become new versions of this lease, not duplicates
-      triggerDownload(res.downloadUrl);
+      setSaved({ leaseId: res.data.id, version: res.data.version });
+      setLeaseId(res.data.id); // later edits become new versions of this lease, not duplicates
+      await refresh();
+      await ds.downloadPdf(res.data.id, res.data.version);
     });
   }
 

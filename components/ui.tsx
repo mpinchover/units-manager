@@ -113,3 +113,12 @@ export function SkeletonPage() {
     </div>
   );
 }
+
+/** Shown when a record doesn't exist (or was just deleted). */
+export function Missing({ what, href, label }: { what: string; href: string; label: string }) {
+  return (
+    <div className="card">
+      <EmptyState icon="file" title={`${what} not found`} description="It may have been deleted." action={<Link href={href} className="btn-secondary">{label}</Link>} />
+    </div>
+  );
+}

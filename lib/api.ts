@@ -1,8 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
-/** Base URL of the Flask API server. Only the Next.js server talks to it; browsers never do. */
+/** API mode only: base URL of the Flask API server. Only the Next.js server talks to it; browsers never do. */
 export const API_URL = (process.env.API_URL ?? "http://127.0.0.1:5001").replace(/\/$/, "");
 export const SESSION_COOKIE = "pp_session";
 
@@ -39,13 +38,6 @@ export async function api<T = unknown>(
   return { ok: false, status: res.status, error: data.error ?? `Request failed (${res.status}).`, errors: data.errors };
 }
 
-/** For page rendering: unwrap a result, sending signed-out users to /login. */
-export async function apiOrThrow<T>(path: string): Promise<T> {
-  const res = await api<T>(path);
-  if (res.ok) return res.data;
-  if (res.status === 401) redirect("/login");
-  throw new Error(res.error);
-}
 
 /** Stream a binary response (PDFs, photos) from the API to the browser, keeping the user's session server-side. */
 export async function proxyFile(path: string, search = ""): Promise<Response> {

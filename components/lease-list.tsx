@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LeaseView } from "@/lib/data/portfolio";
-import type { Ctx } from "@/lib/context";
+import type { Ctx } from "./app-provider";
 
 /** Compact lease history table used on unit and tenant detail pages. */
 export function LeaseList({ leases, ctx, show = "tenants" }: { leases: LeaseView[]; ctx: Ctx; show?: "tenants" | "unit" }) {

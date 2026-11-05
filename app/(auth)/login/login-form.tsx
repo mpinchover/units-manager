@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   createUserWithEmailAndPassword,
@@ -14,6 +14,8 @@ import {
 } from "firebase/auth";
 import { auth } from "@/firebase/firebase";
 import { startSession } from "../actions";
+import { DATA_SOURCE } from "@/lib/data-source/types";
+import { onAuthStateChanged } from "firebase/auth";
 
 type Mode = "signin" | "signup";
 
@@ -58,10 +60,21 @@ export function LoginForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   /** Exchange the Firebase user's fresh ID token for a server session, then enter the app. */
+  // Demo mode: the Firebase session in the browser is the session, so skip the login page when signed in.
+  useEffect(() => {
+    if (DATA_SOURCE !== "demo") return;
+    return onAuthStateChanged(auth, (u) => {
+      if (u) router.replace("/");
+    });
+  }, [router]);
+
   async function finish(user: User) {
-    const result = await startSession(await user.getIdToken(true));
-    await signOut(auth); // the httpOnly server session is the source of truth from here on
-    if (result.error) throw Object.assign(new Error(result.error), { serverMessage: result.error });
+    if (DATA_SOURCE === "api") {
+      // API mode: trade the ID token for an httpOnly server session cookie.
+      const result = await startSession(await user.getIdToken(true));
+      await signOut(auth); // the server session is the source of truth from here on
+      if (result.error) throw Object.assign(new Error(result.error), { serverMessage: result.error });
+    }
     router.replace("/");
     router.refresh();
   }

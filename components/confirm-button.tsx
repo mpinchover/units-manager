@@ -41,7 +41,6 @@ export function ConfirmButton({
           start(async () => {
             const res = await action();
             if (res && res.error) setError(res.error);
-            window.dispatchEvent(new Event("pp:flash"));
           });
         }}
       >
