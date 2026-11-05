@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Muted green accent */
+  --color-brand-50: #f2f7f3;
+  --color-brand-100: #e1eee4;
+  --color-brand-200: #c4ddca;
+  --color-brand-300: #9cc4a6;
+  --color-brand-500: #5e8f6c;
+  --color-brand-600: #4d7c5f;
+  --color-brand-700: #3e654d;
+  --color-brand-800: #34523f;
+
+  --color-canvas: #f7f8f7;
+  --color-line: #e5e8e6;
+  --color-ink: #1c211e;
+  --color-muted: #66706a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@utility card {
+  @apply rounded-xl border border-line bg-white;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+}
+@utility btn-secondary {
+  @apply btn border border-line bg-white text-ink hover:bg-canvas;
+}
+@utility btn-ghost {
+  @apply btn text-muted hover:bg-canvas hover:text-ink;
+}
+@utility btn-danger {
+  @apply btn border border-red-200 bg-white text-red-700 hover:bg-red-50;
+}
+@utility input {
+  @apply block w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink placeholder:text-zinc-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none disabled:bg-canvas disabled:text-muted aria-invalid:border-red-400 aria-invalid:ring-red-100;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-ink;
+}
+@utility link {
+  @apply font-medium text-brand-700 hover:text-brand-800 hover:underline;
+}
+@utility th {
+  @apply px-4 py-2.5 text-left text-xs font-medium tracking-wide text-muted uppercase;
+}
+@utility td {
+  @apply px-4 py-3 text-sm align-middle;
+}
+@utility skeleton {
+  @apply animate-pulse rounded-md bg-zinc-200/70;
 }
